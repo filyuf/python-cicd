@@ -37,12 +37,10 @@ jobs:
 
       - name: Build, tag, and push Docker image
         run: |
-          ECR_REGISTRY=$(aws sts get-caller-identity --query Account --output text).dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-          ECR_REPOSITORY=test_ml_demo
-          IMAGE_TAG=test_ml_image
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-
+          docker build -t $AWS_ACCOUNT_ID.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:${{github.sha }}
+          docker tag $AWS_ACCOUNT_ID.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:${{github.sha }} $AWS_ACCOUNT_ID.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+           
       - name: Deploy to Elastic Beanstalk
         run: |
           aws elasticbeanstalk update-environment --environment-name ${{ secrets.EB_ENV_NAME }} --version-label $GITHUB_SHA
