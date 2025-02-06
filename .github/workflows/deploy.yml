@@ -43,13 +43,13 @@ jobs:
       # Tag Docker image
       - name: Tag Docker image
         run: |
-          docker tag docker/coba:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+          docker tag docker/coba:latest 830108781204.dkr.ecr.us-west-2.amazonaws.com/docker/coba:latest
 
       # Push Docker image to ECR
       - name: Push Docker image to ECR
         run: |
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest
-
+          docker push 830108781204.dkr.ecr.us-west-2.amazonaws.com/docker/coba:latest
+           
       # Create application version in Elastic Beanstalk
       - name: Create application version in Elastic Beanstalk
         run: |
