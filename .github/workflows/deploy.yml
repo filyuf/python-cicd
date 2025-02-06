@@ -1,6 +1,6 @@
-name: Belajar Python CICD 
+name: Belajar Python CICD
 
-on: 
+on:
   push:
     branches:
       - main
@@ -36,11 +36,10 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
 
       - name: Build, tag, and push Docker image
-        env:
-          ECR_REGISTRY: $(aws sts get-caller-identity --query Account --output text).dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-          ECR_REPOSITORY: test_ml_demo
-          IMAGE_TAG: test_ml_image
         run: |
+          ECR_REGISTRY=$(aws sts get-caller-identity --query Account --output text).dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          ECR_REPOSITORY=test_ml_demo
+          IMAGE_TAG=test_ml_image
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
