@@ -35,12 +35,20 @@ jobs:
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
 
-      - name: Build, tag, and push Docker image
+      # Build Docker image
+      - name: Build Docker image
         run: |
-          AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-          docker build -t $AWS_ACCOUNT_ID.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }} .
-          docker push $AWS_ACCOUNT_ID.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.sha }}
-          docker tag $AWS_ACCOUNT_ID.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.sha }} $AWS_ACCOUNT_ID.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+          docker build -t docker/coba .
+
+      # Tag Docker image
+      - name: Tag Docker image
+        run: |
+          docker tag docker/coba:latest 830108781204.dkr.ecr.us-west-2.amazonaws.com/docker/coba:latest
+
+      # Push Docker image to ECR
+      - name: Push Docker image to ECR
+        run: |
+          docker push 830108781204.dkr.ecr.us-west-2.amazonaws.com/docker/coba:latest
            
       - name: Deploy to Elastic Beanstalk
         run: |
