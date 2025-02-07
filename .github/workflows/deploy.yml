@@ -51,11 +51,11 @@ jobs:
 
       - name: Tag Docker image
         run: |
-          docker tag docker/coba:latest ${{ secrets.ECR_REGISTRY }}/docker/coba:latest
+          docker tag docker/coba:latest 830108781204.dkr.ecr.us-west-2.amazonaws.com/docker/coba:latest
 
       - name: Push Docker image to ECR
         run: |
-          docker push ${{ secrets.ECR_REGISTRY }}/docker/coba:latest
+          docker push 830108781204.dkr.ecr.us-west-2.amazonaws.com/docker/coba:latest
 
   deploy:
     needs: build
