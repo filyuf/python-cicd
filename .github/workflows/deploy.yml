@@ -37,16 +37,17 @@ jobs:
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
           docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
-      - name: Build and tag Docker image
+      - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.ECR_REGISTRY }}/docker/coba:${{ github.sha }} .
-          docker tag ${{ secrets.ECR_REGISTRY }}/docker/coba:${{ github.sha }} ${{ secrets.ECR_REGISTRY }}/docker/coba:latest
-
+          docker build -t docker/coba:${{ github.sha }} .
+  
+      - name: Tag Docker image
+        run: |
+          docker tag docker/coba:${{ github.sha }} 830108781204.dkr.ecr.us-west-2.amazonaws.com/docker/coba:${{ github.sha }}
+  
       - name: Push Docker image to ECR
         run: |
-          docker push ${{ secrets.ECR_REGISTRY }}/docker/coba:${{ github.sha }}
-          docker push ${{ secrets.ECR_REGISTRY }}/docker/coba:latest
-
+          docker push 830108781204.dkr.ecr.us-west-2.amazonaws.com/docker/coba:${{ github.sha }}
   deploy:
     needs: build
     runs-on: ubuntu-latest
