@@ -76,7 +76,8 @@ jobs:
           aws elasticbeanstalk create-application-version \
             --application-name ${{ secrets.EB_APP_NAME }} \
             --version-label ${{ github.sha }} \
-            --image-source ImageUrl=830108781204.dkr.ecr.us-west-2.amazonaws.com/docker/coba:${{ github.sha }}
+            --image "830108781204.dkr.ecr.us-west-2.amazonaws.com/docker/coba:${{ github.sha }}"
+        
 
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
