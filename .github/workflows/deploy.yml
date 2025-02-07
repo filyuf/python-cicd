@@ -65,7 +65,7 @@ jobs:
           {
             "AWSEBDockerrunVersion": "1",
             "Image": {
-              "Name": "${{ secrets.ECR_REGISTRY }}/docker/coba:latest",
+              "Name": "${{ secrets.ECR_REGISTRY }}/docker/coba:${{ github.sha }}",
               "Update": "true"
             },
             "Ports": [
