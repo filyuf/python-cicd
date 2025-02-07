@@ -1,4 +1,4 @@
-name: Belajar Python CICD
+name: Belajar CI/CD Python
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
           pip install -r requirements.txt
 
   build:
-    needs: install 
+    needs: install  # Build hanya berjalan jika install selesai sukses
     runs-on: ubuntu-latest
 
     steps:
@@ -36,49 +36,38 @@ jobs:
 
       - name: Authenticate to ECR
         run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
-            docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
 
       - name: Build Docker image
         run: |
           docker build -t docker/coba .
-
+  
       - name: Tag Docker image
         run: |
           docker tag docker/coba:latest 830108781204.dkr.ecr.us-west-2.amazonaws.com/docker/coba:latest
-
+  
       - name: Push Docker image to ECR
         run: |
           docker push 830108781204.dkr.ecr.us-west-2.amazonaws.com/docker/coba:latest
 
   deploy:
-    needs: build
+    needs: build  # Deploy hanya berjalan jika build selesai sukses
     runs-on: ubuntu-latest
 
     steps:
-      - name: Upload Application Package to S3
-        run: |
-          aws s3 cp app.zip s3://${{ secrets.S3_BUCKET_NAME }}/flask-app-${{ github.sha }}.zip
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
-
       - name: Deploy to Elastic Beanstalk
         run: |
           aws elasticbeanstalk create-application-version \
             --application-name ${{ secrets.EB_APP_NAME }} \
             --version-label ${{ github.sha }} \
-            --source-bundle S3Bucket=${{ secrets.S3_BUCKET_NAME }},S3Key=flask-app-${{ github.sha }}.zip
-
+            --auto-create-application \
+            --docker-image-name ${{ secrets.ECR_REGISTRY }}/docker/coba:${{ github.sha }}
+          
           aws elasticbeanstalk update-environment \
             --environment-name ${{ secrets.EB_ENV_NAME }} \
             --version-label ${{ github.sha }}
@@ -89,7 +78,6 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           EB_APP_NAME: ${{ secrets.EB_APP_NAME }}
           EB_ENV_NAME: ${{ secrets.EB_ENV_NAME }}
-          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
 
       - name: Check Elastic Beanstalk Health Status
         run: |
@@ -104,4 +92,3 @@ jobs:
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           EB_ENV_NAME: ${{ secrets.EB_ENV_NAME }}
-
