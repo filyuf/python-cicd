@@ -58,17 +58,17 @@ jobs:
   deploy:
     needs: build  # Deploy hanya berjalan jika build selesai sukses
     runs-on: ubuntu-latest
-
+    
     steps:
     - name: Deploy to Elastic Beanstalk
       run: |
         aws elasticbeanstalk describe-application-versions --application-name ${{ secrets.EB_APP_NAME }}
-
+      
         aws elasticbeanstalk update-environment \
           --environment-name ${{ secrets.EB_ENV_NAME }} \
           --version-label 37be4dabf631d09884d8559f5547673d9554b9af \
-          --option-settings "Namespace=aws:elasticbeanstalk:container:docker:application,OptionName=Image,Value=830108781204.dkr.ecr.us-west-2.amazonaws.com/docker/coba:latest"
-      
+          --option-settings "Namespace=aws:elasticbeanstalk:container:docker,OptionName=Image,Value=830108781204.dkr.ecr.us-west-2.amazonaws.com/docker/coba:latest"
+            
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
