@@ -60,35 +60,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to Elastic Beanstalk
-        run: |
-          aws elasticbeanstalk create-application-version \
-            --application-name ${{ secrets.EB_APP_NAME }} \
-            --version-label ${{ github.sha }} \
-            --auto-create-application \
-            --docker-image-name ${{ secrets.ECR_REGISTRY }}/docker/coba:${{ github.sha }}
-          
-          aws elasticbeanstalk update-environment \
-            --environment-name ${{ secrets.EB_ENV_NAME }} \
-            --version-label ${{ github.sha }}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          EB_APP_NAME: ${{ secrets.EB_APP_NAME }}
-          EB_ENV_NAME: ${{ secrets.EB_ENV_NAME }}
-
-      - name: Check Elastic Beanstalk Health Status
-        run: |
-          echo "Checking the health of the Elastic Beanstalk environment..."
-          aws elasticbeanstalk describe-environment-health \
-            --environment-name ${{ secrets.EB_ENV_NAME }} \
-            --attribute HealthStatus \
-            --query "HealthStatus"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          EB_ENV_NAME: ${{ secrets.EB_ENV_NAME }}
+    - name: Deploy to Elastic Beanstalk
+      run: |
+        aws elasticbeanstalk update-environment \
+          --environment-name ${{ secrets.EB_ENV_NAME }} \
+          --version-label ${{ github.sha }} \
+          --option-settings "Namespace=aws:elasticbeanstalk:container:docker:application,OptionName=Image,Value=830108781204.dkr.ecr.us-west-2.amazonaws.com/docker/coba:latest"
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+        AWS_REGION: ${{ secrets.AWS_REGION }}
+        EB_ENV_NAME: ${{ secrets.EB_ENV_NAME }}
