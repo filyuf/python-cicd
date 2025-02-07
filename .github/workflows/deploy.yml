@@ -58,7 +58,7 @@ jobs:
   deploy:
     needs: build  # Deploy hanya berjalan jika build selesai sukses
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Deploy to Elastic Beanstalk
       run: |
