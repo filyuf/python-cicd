@@ -64,25 +64,23 @@ jobs:
         run: |
           aws elasticbeanstalk update-environment \
             --environment-name ${{ secrets.EB_ENV_NAME }} \
-            --option-settings Namespace=aws:elasticbeanstalk:environment:process:default,OptionName=Image,Value="${{ secrets.ECR_REGISTRY }}/flask-app:${{ github.sha }}"
-
+            --option-settings Namespace=aws:elasticbeanstalk:environment:process:default,OptionName=Image,Value="${{ secrets.ECR_REGISTRY }}/docker/coba:latest"
+        
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-          EB_ENV_NAME: ${{ secrets.EB_ENV_NAME }}
         
       - name: Check Elastic Beanstalk Health Status
         run: |
-          echo "Checking the health of the Elastic Beanstalk environment..."
+          echo "Checking Elastic Beanstalk health..."
           aws elasticbeanstalk describe-environment-health \
-          --environment-name ${{ secrets.EB_ENV_NAME }} \
-          --attribute-names HealthStatus \
-          --query "HealthStatus"
+            --environment-name ${{ secrets.EB_ENV_NAME }} \
+            --attribute-names HealthStatus
+        
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-          EB_ENV_NAME: ${{ secrets.EB_ENV_NAME }}
