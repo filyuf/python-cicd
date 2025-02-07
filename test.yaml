@@ -1,0 +1,90 @@
+name: Belajar CI/CD Python
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.13
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+  build:
+    needs: install  # Build hanya berjalan jika install selesai sukses
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Authenticate to ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.ECR_REGISTRY }}/flask-app:${{ github.sha }} .
+
+      - name: Push Docker Image to ECR
+        run: |
+          docker push ${{ secrets.ECR_REGISTRY }}/flask-app:${{ github.sha }}
+
+  deploy:
+    needs: build  # Deploy hanya berjalan jika build selesai sukses
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Elastic Beanstalk
+        run: |
+          aws elasticbeanstalk create-application-version \
+            --application-name ${{ secrets.EB_APP_NAME }} \
+            --version-label ${{ github.sha }} \
+            --source-bundle S3Bucket=${{ secrets.ECR_REGISTRY }},S3Key=flask-app:${{ github.sha }}
+          
+          aws elasticbeanstalk update-environment \
+            --environment-name ${{ secrets.EB_ENV_NAME }} \
+            --version-label ${{ github.sha }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          EB_APP_NAME: ${{ secrets.EB_APP_NAME }}
+          EB_ENV_NAME: ${{ secrets.EB_ENV_NAME }}
+
+      - name: Check Elastic Beanstalk Health Status
+        run: |
+          echo "Checking the health of the Elastic Beanstalk environment..."
+          aws elasticbeanstalk describe-environment-health \
+            --environment-name ${{ secrets.EB_ENV_NAME }} \
+            --attribute HealthStatus \
+            --query "HealthStatus"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          EB_ENV_NAME: ${{ secrets.EB_ENV_NAME }}
