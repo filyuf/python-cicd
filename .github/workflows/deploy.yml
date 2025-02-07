@@ -62,6 +62,8 @@ jobs:
     steps:
     - name: Deploy to Elastic Beanstalk
       run: |
+        aws elasticbeanstalk describe-application-versions --application-name ${{ secrets.EB_APP_NAME }}
+        
         aws elasticbeanstalk update-environment \
           --environment-name ${{ secrets.EB_ENV_NAME }} \
           --version-label ${{ github.sha }} \
