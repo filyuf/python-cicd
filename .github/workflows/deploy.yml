@@ -63,18 +63,25 @@ jobs:
       - name: Set Image Tag
         run: echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
 
-      - name: Deploy to Elastic Beanstalk
+      - name: Create Elastic Beanstalk Application Version
         run: |
           echo "Creating a new Elastic Beanstalk application version..."
-          
+
           aws elasticbeanstalk create-application-version \
             --application-name ${{ secrets.EB_APP_NAME }} \
             --version-label $IMAGE_TAG \
-            --source-bundle S3Bucket=${{ secrets.EB_BUCKET }},S3Key=app.zip \
-            --region ${{ secrets.AWS_REGION }}
+            --image-source ImageUrl=${{ secrets.ECR_REGISTRY }}/docker/coba:$IMAGE_TAG
 
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+
+      - name: Update Elastic Beanstalk Environment
+        run: |
           echo "Updating Elastic Beanstalk environment to new version..."
-          
+
           aws elasticbeanstalk update-environment \
             --environment-name ${{ secrets.EB_ENV_NAME }} \
             --version-label $IMAGE_TAG
