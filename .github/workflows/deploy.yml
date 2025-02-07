@@ -63,7 +63,7 @@ jobs:
     - name: Deploy to Elastic Beanstalk
       run: |
         aws elasticbeanstalk describe-application-versions --application-name ${{ secrets.EB_APP_NAME }}
-        
+
         aws elasticbeanstalk update-environment \
           --environment-name ${{ secrets.EB_ENV_NAME }} \
           --version-label ${{ github.sha }} \
@@ -74,3 +74,4 @@ jobs:
         AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
         AWS_REGION: ${{ secrets.AWS_REGION }}
         EB_ENV_NAME: ${{ secrets.EB_ENV_NAME }}
+        EB_APP_NAME: ${{ secrets.EB_APP_NAME }}
