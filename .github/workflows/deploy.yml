@@ -13,10 +13,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python 3.x
-        uses: actions/setup-python@v4
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v2
         with:
-          python-version: "3.x"
+          python-version: 3.13
 
       - name: Install dependencies
         run: |
@@ -34,38 +34,53 @@ jobs:
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
 
+      - name: Authenticate to ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.ECR_REGISTRY }}/flask-app:${{ github.sha }} .
+
+      - name: Push Docker Image to ECR
+        run: |
+          docker push ${{ secrets.ECR_REGISTRY }}/flask-app:${{ github.sha }}
+
+  deploy:
+    needs: build  # Deploy hanya berjalan jika build selesai sukses
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Authenticate to AWS ECR
         run: |
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
-      - name: Build & Push Docker Image
-        run: |
-          IMAGE_TAG=${{ secrets.ECR_REGISTRY }}/flask-app:${{ github.sha }}
-          docker build -t $IMAGE_TAG .
-          docker push $IMAGE_TAG
-        env:
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
       - name: Update Elastic Beanstalk to use new Docker image
         run: |
           aws elasticbeanstalk update-environment \
             --environment-name ${{ secrets.EB_ENV_NAME }} \
             --option-settings Namespace=aws:elasticbeanstalk:environment:process:default,OptionName=Image,Value=${{ secrets.ECR_REGISTRY }}/flask-app:${{ github.sha }}
         env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           EB_ENV_NAME: ${{ secrets.EB_ENV_NAME }}
 
-      - name: Check Elastic Beanstalk Health
+      - name: Check Elastic Beanstalk Health Status
         run: |
+          echo "Checking the health of the Elastic Beanstalk environment..."
           aws elasticbeanstalk describe-environment-health \
             --environment-name ${{ secrets.EB_ENV_NAME }} \
-            --attribute-status HealthStatus
+            --attribute-names HealthStatus \
+            --query "HealthStatus"
         env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           EB_ENV_NAME: ${{ secrets.EB_ENV_NAME }}
